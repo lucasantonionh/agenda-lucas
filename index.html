@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda — Lucas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14161A;
+    --surface:#1C1F26;
+    --surface-alt:#23262E;
+    --border:#2A2E37;
+    --text:#E8E9EC;
+    --muted:#8A8F98;
+    --cyan:#4FD1C5;
+    --amber:#F5A623;
+    --green:#34D399;
+    --red:#F87171;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.mono{font-family:'JetBrains Mono',monospace;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid var(--border);
+    position:sticky;top:0;background:var(--bg);z-index:10;
+    flex-wrap:wrap;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+  .brand h1{font-size:17px;margin:0;letter-spacing:0.5px;}
+  .tabs{display:flex;gap:6px;background:var(--surface);padding:4px;border-radius:999px;border:1px solid var(--border);}
+  .tab{padding:7px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);transition:.15s;}
+  .tab.active{background:var(--cyan);color:#0C1210;}
+  .btn{
+    background:var(--cyan);color:#0C1210;border:none;border-radius:8px;
+    padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:'JetBrains Mono',monospace;
+  }
+  .btn:hover{opacity:.9;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn.secondary{background:var(--surface-alt);color:var(--text);border:1px solid var(--border);}
+  main{max-width:1100px;margin:0 auto;padding:20px;}
+
+  /* ---- CALENDÁRIO ---- */
+  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-nav{display:flex;align-items:center;gap:14px;}
+  .cal-nav button{background:var(--surface);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;}
+  .cal-title{font-size:18px;font-weight:700;min-width:180px;text-align:center;}
+  .grid{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:1px;
+    background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+  }
+  .dow{background:var(--surface-alt);text-align:center;padding:8px 0;font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+  .cell{background:var(--surface);min-height:78px;padding:6px;cursor:pointer;transition:.12s;position:relative;}
+  .cell:hover{background:var(--surface-alt);}
+  .cell.out{opacity:.3;}
+  .cell.today{outline:2px solid var(--cyan);outline-offset:-2px;}
+  .cell.selected{background:var(--surface-alt);}
+  .cell .num{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .ticks{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;}
+  .tick{width:6px;height:6px;border-radius:2px;}
+  .tick.Pendente{background:var(--amber);}
+  .tick.Concluído{background:var(--green);}
+  .tick.Cancelado{background:var(--red);}
+
+  /* ---- PAINEL DO DIA ---- */
+  .panel{margin-top:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .panel h3{margin:0 0 12px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .item{
+    background:var(--surface-alt);border-radius:8px;padding:12px;margin-bottom:8px;
+    border-left:3px solid var(--amber);
+  }
+  .item.Concluído{border-left-color:var(--green);opacity:.7;}
+  .item.Cancelado{border-left-color:var(--red);opacity:.5;text-decoration:line-through;}
+  .item-top{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;}
+  .item-meta{font-size:12px;color:var(--muted);margin-top:4px;}
+  .item-actions{margin-top:8px;display:flex;gap:6px;}
+  .item-actions button{font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;}
+  .empty{color:var(--muted);font-size:13px;padding:8px 0;}
+
+  /* ---- ATENDIMENTOS ---- */
+  .quick-form{display:grid;gap:10px;margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .quick-form .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  select,input,textarea{
+    background:var(--surface-alt);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:9px 10px;font-family:'Inter',sans-serif;font-size:13px;width:100%;
+  }
+  textarea{resize:vertical;min-height:50px;}
+  label{font-size:11px;color:var(--muted);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.4px;}
+  .atendimento-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+  .atendimento-row:last-child{border-bottom:none;}
+  .at-time{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:12px;min-width:50px;}
+
+  /* ---- MODAL ---- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;width:100%;max-width:420px;max-height:90vh;overflow:auto;}
+  .modal h3{margin-top:0;}
+  .modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;}
+  .hidden{display:none !important;}
+
+  /* ---- TOAST DE CONFIRMAÇÃO ---- */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--surface-alt);border:1px solid var(--border);border-left:4px solid var(--green);
+    color:var(--text);padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.25s;z-index:200;
+    display:flex;align-items:center;gap:8px;white-space:nowrap;
+  }
+  .toast.erro{border-left-color:var(--red);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media(max-width:640px){
+    .cell{min-height:56px;}
+    .quick-form .row{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span><h1>AGENDA — LUCAS</h1></div>
+  <div class="tabs">
+    <div class="tab active" data-tab="agenda">Agenda</div>
+    <div class="tab" data-tab="atendimentos">Atendimentos</div>
+  </div>
+  <button class="btn" id="btnNovo">+ Novo agendamento</button>
+</div>
+
+<main>
+
+  <!-- ABA AGENDA -->
+  <section id="view-agenda">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button id="prevMonth">‹</button>
+        <div class="cal-title" id="calTitle"></div>
+        <button id="nextMonth">›</button>
+      </div>
+      <button class="btn secondary" id="btnHoje">Hoje</button>
+    </div>
+    <div class="grid" id="calGrid"></div>
+
+    <div class="panel">
+      <h3 id="panelTitle">Selecione um dia</h3>
+      <div id="panelItems"></div>
+    </div>
+  </section>
+
+  <!-- ABA ATENDIMENTOS -->
+  <section id="view-atendimentos" class="hidden">
+    <div class="quick-form">
+      <label>Registrar atendimento rápido</label>
+      <div class="row">
+        <div>
+          <label>Loja</label>
+          <select id="atLoja"></select>
+        </div>
+        <div>
+          <label>Tipo</label>
+          <select id="atTipo">
+            <option>Suporte</option>
+            <option>Chamado</option>
+            <option>Visita técnica</option>
+            <option>Outro</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>Descrição</label>
+        <textarea id="atDescricao" placeholder="O que foi feito..."></textarea>
+      </div>
+      <button class="btn" id="btnSalvarAtendimento">Salvar atendimento</button>
+    </div>
+
+    <div class="panel">
+      <h3>Hoje (<span id="atCount">0</span>)</h3>
+      <div id="atList"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- MODAL NOVO AGENDAMENTO -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Novo agendamento</h3>
+    <div style="display:grid;gap:10px;">
+      <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><label>Data</label><input type="date" id="fData"></div>
+        <div><label>Horário</label><input type="time" id="fHorario"></div>
+      </div>
+      <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label>Duração estimada</label>
+          <select id="fDuracao">
+            <option value="15">15 min</option>
+            <option value="30" selected>30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">1h</option>
+            <option value="90">1h30</option>
+            <option value="120">2h</option>
+          </select>
+        </div>
+        <div><label>Loja</label><select id="fLoja"></select></div>
+      </div>
+      <div><label>Responsável por chamar</label><input type="text" id="fResponsavel" placeholder="Quem pediu"></div>
+      <div><label>Descrição / motivo</label><textarea id="fDescricao"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" id="btnCancelarModal">Cancelar</button>
+      <button class="btn" id="btnSalvarAgenda">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST DE CONFIRMAÇÃO -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ CONFIGURAÇÃO ============ */
+// Cole aqui a URL do seu deploy do Apps Script (termina em /exec)
+const APP_URL = 'COLE_AQUI_A_URL_DO_DEPLOY_DO_APPS_SCRIPT';
+
+/* ============ HELPERS DE API ============ */
+async function apiGet(action, extra){
+  const params = new URLSearchParams({action, ...extra});
+  const res = await fetch(APP_URL + '?' + params.toString());
+  return res.json();
+}
+async function apiPost(payload){
+  // text/plain evita preflight CORS no Apps Script
+  const res = await fetch(APP_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+  return res.json();
+}
+
+/* ============ ESTADO ============ */
+let mesAtual = new Date();
+let diaSelecionado = null;
+let agendaCache = [];
+let lojas = [];
+
+const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function toBR(d){
+  const dd=String(d.getDate()).padStart(2,'0'), mm=String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+function toISO(d){
+  const dd=String(d.getDate()).padStart(2,'0'), mm=String(d.getMonth()+1).padStart(2,'0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+let toastTimeout;
+function showToast(msg, erro){
+  const toast = document.getElementById('toast');
+  toast.textContent = (erro ? '⚠️ ' : '✅ ') + msg;
+  toast.className = 'toast show' + (erro ? ' erro' : '');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(()=> toast.classList.remove('show'), 3000);
+}
+
+/* ============ CALENDÁRIO ============ */
+async function carregarAgenda(){
+  agendaCache = await apiGet('agenda', {});
+  renderCalendario();
+  if(diaSelecionado) renderPainelDia(diaSelecionado);
+}
+
+function renderCalendario(){
+  document.getElementById('calTitle').textContent = meses[mesAtual.getMonth()] + ' ' + mesAtual.getFullYear();
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d=>{
+    const el = document.createElement('div'); el.className='dow'; el.textContent=d; grid.appendChild(el);
+  });
+
+  const primeiroDia = new Date(mesAtual.getFullYear(), mesAtual.getMonth(), 1);
+  const inicioGrid = new Date(primeiroDia);
+  inicioGrid.setDate(inicioGrid.getDate() - primeiroDia.getDay());
+
+  const hojeBR = toBR(new Date());
+
+  for(let i=0;i<42;i++){
+    const dia = new Date(inicioGrid);
+    dia.setDate(inicioGrid.getDate()+i);
+    const diaBR = toBR(dia);
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    if(dia.getMonth() !== mesAtual.getMonth()) cell.classList.add('out');
+    if(diaBR === hojeBR) cell.classList.add('today');
+    if(diaSelecionado === diaBR) cell.classList.add('selected');
+
+    const itensDoDia = agendaCache.filter(a => a.data === diaBR);
+    let ticksHtml = '<div class="ticks">' + itensDoDia.slice(0,8).map(a=>`<div class="tick ${a.status}"></div>`).join('') + '</div>';
+
+    cell.innerHTML = `<div class="num">${dia.getDate()}</div>${ticksHtml}`;
+    cell.addEventListener('click', ()=>{ diaSelecionado = diaBR; renderCalendario(); renderPainelDia(diaBR); });
+    grid.appendChild(cell);
+  }
+}
+
+function renderPainelDia(diaBR){
+  document.getElementById('panelTitle').textContent = 'Compromissos — ' + diaBR;
+  const wrap = document.getElementById('panelItems');
+  const itens = agendaCache.filter(a=>a.data===diaBR).sort((a,b)=>a.horario.localeCompare(b.horario));
+  if(itens.length===0){ wrap.innerHTML = '<div class="empty">Nada agendado nesse dia.</div>'; return; }
+  wrap.innerHTML = itens.map(i=>`
+    <div class="item ${i.status}">
+      <div class="item-top"><span>${i.horario} — ${i.loja}</span><span>${i.status}</span></div>
+      <div class="item-meta">👤 ${i.responsavel} · ⏱️ ${i.duracao} min · Origem: ${i.origem}</div>
+      <div class="item-meta">${i.descricao}</div>
+      ${i.status==='Pendente' ? `
+      <div class="item-actions">
+        <button onclick="concluir(${i.id})">Concluir</button>
+        <button onclick="cancelar(${i.id})">Cancelar</button>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function concluir(id){
+  const r = await apiPost({action:'concluirAgenda', id});
+  if(r && r.ok) showToast('Marcado como concluído.'); else showToast('Não foi possível concluir.', true);
+  carregarAgenda();
+}
+async function cancelar(id){
+  const r = await apiPost({action:'cancelarAgenda', id});
+  if(r && r.ok) showToast('Compromisso cancelado.'); else showToast('Não foi possível cancelar.', true);
+  carregarAgenda();
+}
+
+/* ============ MODAL NOVO AGENDAMENTO ============ */
+const overlay = document.getElementById('overlay');
+document.getElementById('btnNovo').onclick = ()=>{
+  document.getElementById('fData').value = toISO(diaSelecionado ? parseBR(diaSelecionado) : new Date());
+  overlay.classList.add('open');
+};
+document.getElementById('btnCancelarModal').onclick = ()=> overlay.classList.remove('open');
+
+function parseBR(diaBR){ const [d,m,y]=diaBR.split('/'); return new Date(y,m-1,d); }
+
+document.getElementById('btnSalvarAgenda').onclick = async ()=>{
+  const dataISO = document.getElementById('fData').value;
+  if(!dataISO || !document.getElementById('fHorario').value){ alert('Preencha data e horário.'); return; }
+  const [y,m,d] = dataISO.split('-');
+  const payload = {
+    action:'criarAgenda',
+    data: {
+      data: `${d}/${m}/${y}`,
+      horario: document.getElementById('fHorario').value,
+      duracao: document.getElementById('fDuracao').value,
+      loja: document.getElementById('fLoja').value,
+      responsavel: document.getElementById('fResponsavel').value,
+      descricao: document.getElementById('fDescricao').value
+    }
+  };
+  const btn = document.getElementById('btnSalvarAgenda');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+  try {
+    const resultado = await apiPost(payload);
+    if(resultado && resultado.ok){
+      showToast('Agendamento salvo!');
+      overlay.classList.remove('open');
+      ['fHorario','fResponsavel','fDescricao'].forEach(id=>document.getElementById(id).value='');
+      await carregarAgenda();
+    } else {
+      showToast('Não foi possível salvar. Tente de novo.', true);
+    }
+  } catch (e) {
+    showToast('Erro de conexão. Tente de novo.', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Salvar';
+  }
+};
+
+/* ============ NAVEGAÇÃO DO CALENDÁRIO ============ */
+document.getElementById('prevMonth').onclick=()=>{ mesAtual.setMonth(mesAtual.getMonth()-1); renderCalendario(); };
+document.getElementById('nextMonth').onclick=()=>{ mesAtual.setMonth(mesAtual.getMonth()+1); renderCalendario(); };
+document.getElementById('btnHoje').onclick=()=>{ mesAtual = new Date(); diaSelecionado = toBR(new Date()); renderCalendario(); renderPainelDia(diaSelecionado); };
+
+/* ============ ABAS ============ */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const alvo = tab.dataset.tab;
+    document.getElementById('view-agenda').classList.toggle('hidden', alvo!=='agenda');
+    document.getElementById('view-atendimentos').classList.toggle('hidden', alvo!=='atendimentos');
+    if(alvo==='atendimentos') carregarAtendimentos();
+  };
+});
+
+/* ============ ATENDIMENTOS ============ */
+async function carregarAtendimentos(){
+  const itens = await apiGet('atendimentos', {data: toBR(new Date())});
+  document.getElementById('atCount').textContent = itens.length;
+  const list = document.getElementById('atList');
+  if(itens.length===0){ list.innerHTML = '<div class="empty">Nenhum atendimento hoje ainda.</div>'; return; }
+  list.innerHTML = itens.map(i=>`
+    <div class="atendimento-row">
+      <div><span class="at-time">${i.hora}</span> ${i.loja} — ${i.tipo}<br><span style="color:var(--muted);font-size:12px;">${i.descricao}</span></div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('btnSalvarAtendimento').onclick = async ()=>{
+  const desc = document.getElementById('atDescricao').value.trim();
+  if(!desc){ alert('Descreva o atendimento.'); return; }
+  const btn = document.getElementById('btnSalvarAtendimento');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+  try {
+    const resultado = await apiPost({action:'criarAtendimento', data:{
+      loja: document.getElementById('atLoja').value,
+      tipo: document.getElementById('atTipo').value,
+      descricao: desc
+    }});
+    if(resultado && resultado.ok){
+      showToast('Atendimento registrado!');
+      document.getElementById('atDescricao').value='';
+      await carregarAtendimentos();
+    } else {
+      showToast('Não foi possível registrar. Tente de novo.', true);
+    }
+  } catch (e) {
+    showToast('Erro de conexão. Tente de novo.', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Salvar atendimento';
+  }
+};
+
+/* ============ LOJAS ============ */
+async function carregarLojas(){
+  lojas = await apiGet('lojas', {});
+  ['fLoja','atLoja'].forEach(id=>{
+    const sel = document.getElementById(id);
+    sel.innerHTML = lojas.map(l=>`<option value="${l}">${l}</option>`).join('');
+  });
+}
+
+/* ============ INIT ============ */
+(async function init(){
+  diaSelecionado = toBR(new Date());
+  await carregarLojas();
+  await carregarAgenda();
+})();
+</script>
+</body>
+</html>
